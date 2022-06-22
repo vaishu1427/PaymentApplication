@@ -79,9 +79,7 @@ class Account extends User {
         String enter=input.next();
         Main.HomePage();
     }
-    public void giraffe(){
-
-    }
+    
     public void sendMoney() {
         int count1=0;
         int count=0;
