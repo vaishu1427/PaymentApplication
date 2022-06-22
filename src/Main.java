@@ -381,6 +381,9 @@ public class Main {
     }
 
 }
+class Giraffe{
+    
+}
 class Contacts extends Account{
         String ContactNumber,Name;
 
