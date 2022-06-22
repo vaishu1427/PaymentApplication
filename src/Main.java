@@ -10,6 +10,8 @@ class User {
     private int  Pin ;
     private double  UserIdd ;
     protected double balance;
+    protected ArrayList<String> MoneyTransferedContacts=new ArrayList<>();
+    protected ArrayList<Contact> ContactList = new ArrayList<>();
 
     public String getNamee() {
         return Namee;
@@ -24,8 +26,10 @@ class User {
     public double getUserId() {
         return UserIdd;
     }
+    public ArrayList<String> getMoneyTransferedContacts(){
+        return MoneyTransferedContacts;
+    }
 
-    
     public void setNamee(String namee) {
         Namee = namee;
     }
@@ -39,6 +43,9 @@ class User {
     public void setUserId(double userIdd) {
         UserIdd = userIdd;
     }
+    public void setMoneyTransferedContacts(String number){
+        MoneyTransferedContacts.add(number);
+    }
     
     
     public double getBalance() {
@@ -48,10 +55,10 @@ class User {
 }
 
 class Account extends User {
+
     static ArrayList<String> RechargedContacts=new ArrayList<>();
-    static ArrayList<String> MoneyTransferedContacts=new ArrayList<>();
     static Scanner input=Main.input;
-    static HashMap<String, String> ContactList = new HashMap<String, String>();
+    static HashMap<String, String> TransactionList = new HashMap<String, String>();
 
     public void addRechargedContacts(String mobilenum){
         int count=0;
@@ -83,22 +90,20 @@ class Account extends User {
     public void sendMoney() {
         int count1=0;
         int count=0;
-        if(MoneyTransferedContacts.size()>=0){
-            for (String i : MoneyTransferedContacts) {
-                if(count1==0) {
-                    System.out.println("\nContacts of previous money transaction :");
-                }
-                System.out.println(count1 + 1 + " .  " + MoneyTransferedContacts.get(count1));
+        if(Main.Users.get(Main.CurrentUserIndex).getMoneyTransferedContacts().size()>=0){
+            if(Main.Users.get(Main.CurrentUserIndex).getMoneyTransferedContacts().size()>0) {
+                System.out.println("\nContacts of previous money transaction :");
+            }
+            for (String i : Main.Users.get(Main.CurrentUserIndex).getMoneyTransferedContacts()) {
+                System.out.println(count1 + 1 + " .  " + Main.Users.get(Main.CurrentUserIndex).getMoneyTransferedContacts().get(count1));
                 count1++;
             }
             if(ContactList.size()>0) {
                 System.out.println("\nYour saved contacts :\n");
-                Iterator ContactListIterator = ContactList.entrySet().iterator();
-                while (ContactListIterator.hasNext()) {
-
-                    Map.Entry mapElement = (Map.Entry) ContactListIterator.next();
-                    ++count;
-                    System.out.println(count + " . " + mapElement.getKey() + " : " + mapElement.getValue());
+                int contactcount = 0;
+                for (Contact ele: ContactList
+                ) {
+                    System.out.println(contactcount+". "+ele.getContactNumber()+"Name : "+ele.getName());
                 }
             }
         }
@@ -106,10 +111,10 @@ class Account extends User {
         String sendmobilenum=input.next();
         System.out.print("\nEnter the amount to send :");
         int sendmoney=input.nextInt();
-        if(balance>sendmoney &&  sendmobilenum.matches("[987][0-9]{9}")) {
-            MoneyTransferedContacts.add(sendmobilenum);
+        if(Main.Users.get(Main.CurrentUserIndex).balance>sendmoney &&  sendmobilenum.matches("[9876][0-9]{9}")) {
+            Main.Users.get(Main.CurrentUserIndex).setMoneyTransferedContacts(sendmobilenum);
             System.out.println("\nSuccessfully transfered the amount '"+sendmoney+"' to the mobile number '"+sendmobilenum+"'\n");
-            balance=balance-sendmoney;
+            Main.Users.get(Main.CurrentUserIndex).balance =Main.Users.get(Main.CurrentUserIndex).balance-sendmoney;
             System.out.print("\nPress 'c' to continue.....   ");
             String enter=input.next();
             Main.HomePage();
@@ -135,12 +140,10 @@ class Account extends User {
             }
             if(ContactList.size()>=1) {
                 System.out.println("\nYour saved contacts :\n");
-                Iterator ContactListIterator = ContactList.entrySet().iterator();
-                while (ContactListIterator.hasNext()) {
-
-                    Map.Entry mapElement = (Map.Entry) ContactListIterator.next();
-                    ++count;
-                    System.out.println(count + " . " + mapElement.getKey() + " : " + mapElement.getValue());
+                int contactcount = 0;
+                for (Contact ele: ContactList
+                ) {
+                    System.out.println(contactcount+". "+ele.getContactNumber()+"Name : "+ele.getName());
                 }
             }
         }
@@ -249,12 +252,42 @@ class Account extends User {
     }
 
     public void checkBalance() {
-        System.out.println("\nBalance is : "+balance);
+        System.out.println("\nBalance is : "+Main.Users.get(Main.CurrentUserIndex).balance);
         System.out.print("\nPress 'c' to continue.....   ");
         String enter=input.next();
         Main.HomePage();
     }
 
+    public void saveContact(){
+        int count=0;
+        if(Main.Users.get(Main.CurrentUserIndex).ContactList.size()>=1){
+            System.out.println("\nYour saved contacts :\n");
+            int contactcount = 0;
+            for (Contact ele: Main.Users.get(Main.CurrentUserIndex).ContactList
+                 ) {
+                System.out.println((contactcount+1)+". "+ele.Name+" - "+ele.ContactNumber);
+                contactcount++;
+            }
+
+        }
+        System.out.print("\nEnter the number to save in your contact list : ");
+        input.nextLine();
+        String ContactNumber = input.nextLine();
+        System.out.print("\nEnter the user name : ");
+        String Name = input.nextLine();
+        Contact newcontact = new Contact();
+        newcontact.setName(Name);
+        newcontact.setContactNumber(ContactNumber);
+        Main.Users.get(Main.CurrentUserIndex).ContactList.add(newcontact);
+        System.out.println("\nContact number added successfully :) \n");
+        System.out.print("\nPress 'c' to continue.....   ");
+        String enter=input.next();
+        Main.HomePage();
+    }
+
+    public void SaveTransaction(){
+
+    }
 
 
 }
@@ -265,12 +298,39 @@ class Account extends User {
 public class Main {
     static Scanner input = new Scanner(System.in);
     static Account acc = new Account();
-    static Contacts con=new Contacts();
     static List<User> Users = new ArrayList<>();
     static boolean UserAuth = false;
-    static User CurrentUser;
+    static int CurrentUserIndex;
 
     public static void main(String[] args) {
+        String usernameinput = "Vaishu";
+        String addressinput = "Coimbatore";
+        String mobileinput = "9874563210";
+        int pininput = 12345;
+        int useridd = Users.size() + 1;
+        User NewUser = new User();
+        NewUser.setNamee(usernameinput);
+        NewUser.setAddress(addressinput);
+        NewUser.setMobile(mobileinput);
+        NewUser.setPin(pininput);
+        NewUser.setUserId(useridd);
+        NewUser.balance = 500;
+        Users.add(NewUser);
+        System.out.println(useridd);
+        String usernameinput1 = "Udhaya";
+        String addressinput1 = "Tiruppur";
+        String mobileinput1 = "9874563211";
+        int pininput1 = 1234;
+        int useridd1 = Users.size() + 1;
+        User NewUser1 = new User();
+        NewUser1.setNamee(usernameinput1);
+        NewUser1.setAddress(addressinput1);
+        NewUser1.setMobile(mobileinput1);
+        NewUser1.setPin(pininput1);
+        NewUser1.setUserId(useridd1);
+        NewUser1.balance = 400;
+        Users.add(NewUser1);
+        System.out.println(useridd1);
         mainfunction();
     }
 
@@ -297,17 +357,19 @@ public class Main {
         int useridinput = input.nextInt();
         System.out.print("Pin : ");
         int pininput = input.nextInt();
+        int index = 0;
         for (User ele : Users
         ) {
             if (ele.getUserId() == useridinput && ele.getPin()== pininput) {
                 UserAuth = true;
-                CurrentUser = ele;
+                CurrentUserIndex = index;
                 System.out.println("\nLogin successful  :)\n");
                 System.out.print("\nPress 'c' to continue.....   ");
                 String enter=input.next();
                 HomePage();
                 break;
             }
+            index++;
         }
         System.out.println("\nInvalid Try again\n");
         System.out.print("\nPress 'c' to continue.....   ");
@@ -346,7 +408,7 @@ public class Main {
         System.exit(0);
     }
     public static void HomePage() {
-        System.out.println("\n\nWelcome " + CurrentUser.getNamee() + "\n\n1.Add Money\n2.Send Money\n3.Mobile Recharge" +
+        System.out.println("\n\nWelcome " + Users.get(CurrentUserIndex).getNamee() + "\n\n1.Add Money\n2.Send Money\n3.Mobile Recharge" +
                 "\n4.DTH Recharge\n5.Electricity\n6.Save contact\n7.Check Balance\n8.History\n9.Exit\n\n ");
         System.out.print("Enter your input : ");
 
@@ -368,23 +430,25 @@ public class Main {
                 acc.electricity();
                 break;
             case 6:
-                con.saveContact();
+                acc.saveContact();
                 break;
             case 7:
                 acc.checkBalance();
                 break;
             case 9:
-                Exit();
+                mainfunction();
             default:
                 break;
         }
     }
 
 }
-class Giraffe{
-    
+
+class Transaction extends  Account{
 }
-class Contacts extends Account{
+
+
+class Contact extends Account{
         String ContactNumber,Name;
 
         public String getName() {
@@ -400,31 +464,6 @@ class Contacts extends Account{
             ContactNumber = contactNumber;
         }
 
-
-        public void saveContact(){
-            int count=0;
-            if(ContactList.size()>=1){
-                System.out.println("\nYour saved contacts :\n");
-                Iterator ContactListIterator = ContactList.entrySet().iterator();
-                while (ContactListIterator.hasNext()) {
-                    Map.Entry mapElement = (Map.Entry)ContactListIterator.next();
-                    ++count;
-                    System.out.println(count +" . "+mapElement.getKey() + " : " + mapElement.getValue());
-                }
-            }
-            System.out.print("\nEnter the number to save in your contact list : ");
-            input.nextLine();
-            Name = input.nextLine();
-            System.out.print("\nEnter the user name : ");
-            ContactNumber = input.nextLine();
-            setName(Name);
-            setContactNumber(ContactNumber);
-            ContactList.put(Name, ContactNumber);
-            System.out.println("\nContact number added successfully :) \n");
-            System.out.print("\nPress 'c' to continue.....   ");
-            String enter=input.next();
-            Main.HomePage();
-        }
 
 }
 
