@@ -69,7 +69,7 @@ class Account extends User {
     public void addMoney() {
         System.out.print("\nEnter the amount to deposit:");
         double amount1=input.nextDouble();
-        balance = balance + amount1;
+        Main.Users.get(Main.CurrentUserIndex).balance = Main.Users.get(Main.CurrentUserIndex).balance + amount1;
 
         System.out.println("\nThe amount '"+amount1+"' added successfully to your account :) \n");
         System.out.print("\nPress 'c' to continue.....   ");
@@ -104,16 +104,7 @@ class Account extends User {
         int sendmoney=input.nextInt();
         if(Main.Users.get(Main.CurrentUserIndex).balance>sendmoney &&  sendmobilenum.matches("[9876][0-9]{9}")) {
             Main.Users.get(Main.CurrentUserIndex).setMoneyTransferedContacts(sendmobilenum);
-
-            TransactionHistory newTransaction = new TransactionHistory();
-            newTransaction.setType("Money Transfer");
-            newTransaction.setAmount(sendmoney);
-            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-            Date date = new Date();
-            newTransaction.setDate(formatter.format(date));
-            newTransaction.setTo(sendmobilenum);
-            Main.Users.get(Main.CurrentUserIndex).TransactionHistorys.add(newTransaction);
-
+            SaveTransaction("Money Transfer",sendmobilenum,sendmoney);
             System.out.println("\nSuccessfully transfered the amount '"+sendmoney+"' to the mobile number '"+sendmobilenum+"'\n");
             Main.Users.get(Main.CurrentUserIndex).balance =Main.Users.get(Main.CurrentUserIndex).balance-sendmoney;
             System.out.print("\nPress 'c' to continue.....   ");
@@ -161,6 +152,7 @@ class Account extends User {
                 if(Main.Users.get(Main.CurrentUserIndex).balance>182 &&  mobilenum.matches("[9876][0-9]{9}")) {
                     Main.Users.get(Main.CurrentUserIndex).balance=Main.Users.get(Main.CurrentUserIndex).balance-182;
                     Main.Users.get(Main.CurrentUserIndex).setRechargedContacts(mobilenum);
+                    SaveTransaction("Mobile Recharge",mobilenum,182);
                     System.out.println("\nRecharge of '182.0' is successful for the number '" + mobilenum + "'\nBenefits:Unlimited Data,no Voice/SMS\n");
                     System.out.print("\nPress 'c' to continue.....   ");
                     String enter=input.next();
@@ -174,9 +166,10 @@ class Account extends User {
                 }
             case 2:
 
-                if(Main.Users.get(Main.CurrentUserIndex).balance>182 &&  mobilenum.matches("[9876][0-9]{9}")) {
+                if(Main.Users.get(Main.CurrentUserIndex).balance>299 &&  mobilenum.matches("[9876][0-9]{9}")) {
                     Main.Users.get(Main.CurrentUserIndex).balance=Main.Users.get(Main.CurrentUserIndex).balance-299;
                     Main.Users.get(Main.CurrentUserIndex).setRechargedContacts(mobilenum);
+                    SaveTransaction("Mobile Recharge",mobilenum,299);
                     System.out.println("\nRecharge of '299.0' is successful for the number '" + mobilenum + "\nBenefits:Unlimited Data,no Voice/SMS\n");
                     System.out.print("\nPress 'c' to continue.....   ");
                     String enter=input.next();
@@ -190,9 +183,10 @@ class Account extends User {
                 }
             case 3:
 
-                if(Main.Users.get(Main.CurrentUserIndex).balance>182 &&  mobilenum.matches("[9876][0-9]{9}")) {
+                if(Main.Users.get(Main.CurrentUserIndex).balance>399 &&  mobilenum.matches("[9876][0-9]{9}")) {
                     Main.Users.get(Main.CurrentUserIndex).balance=Main.Users.get(Main.CurrentUserIndex).balance-399;
                     Main.Users.get(Main.CurrentUserIndex).setRechargedContacts(mobilenum);
+                    SaveTransaction("Mobile Recharge",mobilenum,399);
                     System.out.println("\nRecharge of '399.0' is successful for the number '" + mobilenum + "'\nBenefits:Unlimited Data,no Voice/SMS\n");
                     System.out.print("\nPress 'c' to continue.....   ");
                     String enter=input.next();
@@ -214,8 +208,9 @@ class Account extends User {
         String customerId=input.next();
         System.out.print("\nEnter the amount to recharge : ");
         int DTHAmount=input.nextInt();
-        if(balance>DTHAmount) {
-            balance = balance - DTHAmount;
+        if(Main.Users.get(Main.CurrentUserIndex).balance>DTHAmount) {
+            Main.Users.get(Main.CurrentUserIndex).balance = Main.Users.get(Main.CurrentUserIndex).balance - DTHAmount;
+            SaveTransaction("DTH Recharge",customerId,DTHAmount);
             System.out.println("\nSuccessfully recharged for amount '" + DTHAmount + "' :)\n");
             System.out.print("\nPress 'c' to continue.....   ");
             String enter = input.next();
@@ -237,8 +232,9 @@ class Account extends User {
         String customerId=input.next();
         System.out.print("\nEnter the amount to pay electricity bill:");
         int ElectricityAmount=input.nextInt();
-        if(balance>ElectricityAmount) {
-            balance = balance - ElectricityAmount;
+        if(Main.Users.get(Main.CurrentUserIndex).balance>ElectricityAmount) {
+            Main.Users.get(Main.CurrentUserIndex).balance = Main.Users.get(Main.CurrentUserIndex).balance - ElectricityAmount;
+            SaveTransaction("Electricity",customerId,ElectricityAmount);
             System.out.println("\nSuccessfully paid the amount '" + ElectricityAmount + "' :)\n");
             System.out.print("\nPress 'c' to continue.....   ");
             String enter = input.next();
@@ -291,11 +287,12 @@ class Account extends User {
 
         if (Main.Users.get(Main.CurrentUserIndex).TransactionHistorys.size()>0){
             int tcount =0;
+            System.out.println("\n\nYour TransactionHistory");
             for (TransactionHistory ele: Main.Users.get(Main.CurrentUserIndex).TransactionHistorys
                  ) {
-                System.out.println("\n\nYour TransactionHistory\n\n"+(tcount+1)+". "+ele.Type+"/"+ele.to+"/"+ele.Amount+"/"+ele.date);
+                System.out.print("\n"+(tcount+1)+". Type: "+ele.Type+"| To: "+ele.to+"| Amount: "+ele.Amount+"| Date: "+ele.date);
             }
-            System.out.print("\nPress 'c' to continue.....   ");
+            System.out.print("\n\n\nPress 'c' to continue.....   ");
             String enter=input.next();
             Main.HomePage();
         }else {
@@ -306,8 +303,16 @@ class Account extends User {
         }
 
     }
-    public void SaveTransaction(){
 
+    public void SaveTransaction(String Type ,String to, int Amount ){
+        TransactionHistory newTransaction = new TransactionHistory();
+        newTransaction.setType(Type);
+        newTransaction.setAmount(Amount);
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        Date date = new Date();
+        newTransaction.setDate(formatter.format(date));
+        newTransaction.setTo(to);
+        Main.Users.get(Main.CurrentUserIndex).TransactionHistorys.add(newTransaction);
     }
 
 
@@ -385,8 +390,6 @@ public class Main {
                 UserAuth = true;
                 CurrentUserIndex = index;
                 System.out.println("\nLogin successful  :)\n");
-                System.out.print("\nPress 'c' to continue.....   ");
-                String enter=input.next();
                 HomePage();
                 break;
             }
@@ -431,7 +434,7 @@ public class Main {
 
     public static void HomePage() {
         System.out.println("\n\nWelcome " + Users.get(CurrentUserIndex).getNamee() + "\n\n1.Add Money\n2.Send Money\n3.Mobile Recharge" +
-                "\n4.DTH Recharge\n5.Electricity\n6.Save contact\n7.Check Balance\n8.History\n9.Exit\n\n ");
+                "\n4.DTH Recharge\n5.Electricity\n6.Save contact\n7.Check Balance\n8.History\n9.Logout\n\n ");
         System.out.print("Enter your input : ");
 
         int Homeinput = input.nextInt();
