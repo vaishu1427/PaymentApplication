@@ -1,5 +1,5 @@
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.*;
 
@@ -12,6 +12,8 @@ class User {
     protected double balance;
     protected ArrayList<String> MoneyTransferedContacts=new ArrayList<>();
     protected ArrayList<Contact> ContactList = new ArrayList<>();
+    protected ArrayList<String> RechargedContacts=new ArrayList<>();
+    protected ArrayList<TransactionHistory> TransactionHistorys = new ArrayList<>();
 
     public String getNamee() {
         return Namee;
@@ -29,6 +31,10 @@ class User {
     public ArrayList<String> getMoneyTransferedContacts(){
         return MoneyTransferedContacts;
     }
+    public ArrayList<String> getRechargedContacts(){
+        return RechargedContacts;
+    }
+
 
     public void setNamee(String namee) {
         Namee = namee;
@@ -46,8 +52,9 @@ class User {
     public void setMoneyTransferedContacts(String number){
         MoneyTransferedContacts.add(number);
     }
-    
-    
+    public void setRechargedContacts(String number){
+        RechargedContacts.add(number);
+    }
     public double getBalance() {
         return balance;
     }
@@ -56,25 +63,8 @@ class User {
 
 class Account extends User {
 
-    static ArrayList<String> RechargedContacts=new ArrayList<>();
+
     static Scanner input=Main.input;
-    static HashMap<String, String> TransactionList = new HashMap<String, String>();
-
-    public void addRechargedContacts(String mobilenum){
-        int count=0;
-        for(int i=0;i<RechargedContacts.size();i++){
-            if(!mobilenum.equals(RechargedContacts.get(i))){
-                count++;
-            }
-            else{
-                break;
-            }
-        }
-        if(count==RechargedContacts.size()){
-            RechargedContacts.add(mobilenum);
-        }
-
-    }
 
     public void addMoney() {
         System.out.print("\nEnter the amount to deposit:");
@@ -89,7 +79,6 @@ class Account extends User {
     
     public void sendMoney() {
         int count1=0;
-        int count=0;
         if(Main.Users.get(Main.CurrentUserIndex).getMoneyTransferedContacts().size()>=0){
             if(Main.Users.get(Main.CurrentUserIndex).getMoneyTransferedContacts().size()>0) {
                 System.out.println("\nContacts of previous money transaction :");
@@ -98,13 +87,15 @@ class Account extends User {
                 System.out.println(count1 + 1 + " .  " + Main.Users.get(Main.CurrentUserIndex).getMoneyTransferedContacts().get(count1));
                 count1++;
             }
-            if(ContactList.size()>0) {
+            if(Main.Users.get(Main.CurrentUserIndex).ContactList.size()>=1){
                 System.out.println("\nYour saved contacts :\n");
                 int contactcount = 0;
-                for (Contact ele: ContactList
+                for (Contact ele: Main.Users.get(Main.CurrentUserIndex).ContactList
                 ) {
-                    System.out.println(contactcount+". "+ele.getContactNumber()+"Name : "+ele.getName());
+                    System.out.println((contactcount+1)+". "+ele.Name+" - "+ele.ContactNumber);
+                    contactcount++;
                 }
+
             }
         }
         System.out.print("\nEnter the mobile number to send money : ");
@@ -113,6 +104,16 @@ class Account extends User {
         int sendmoney=input.nextInt();
         if(Main.Users.get(Main.CurrentUserIndex).balance>sendmoney &&  sendmobilenum.matches("[9876][0-9]{9}")) {
             Main.Users.get(Main.CurrentUserIndex).setMoneyTransferedContacts(sendmobilenum);
+
+            TransactionHistory newTransaction = new TransactionHistory();
+            newTransaction.setType("Money Transfer");
+            newTransaction.setAmount(sendmoney);
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            Date date = new Date();
+            newTransaction.setDate(formatter.format(date));
+            newTransaction.setTo(sendmobilenum);
+            Main.Users.get(Main.CurrentUserIndex).TransactionHistorys.add(newTransaction);
+
             System.out.println("\nSuccessfully transfered the amount '"+sendmoney+"' to the mobile number '"+sendmobilenum+"'\n");
             Main.Users.get(Main.CurrentUserIndex).balance =Main.Users.get(Main.CurrentUserIndex).balance-sendmoney;
             System.out.print("\nPress 'c' to continue.....   ");
@@ -129,22 +130,23 @@ class Account extends User {
 
     public void mobileRecharge() {
         int count2 = 0;
-        int count=0;
-        if(RechargedContacts.size()>=0){
-            for (String i : RechargedContacts) {
+        if(Main.Users.get(Main.CurrentUserIndex).getRechargedContacts().size()>=0){
+            for (String i : Main.Users.get(Main.CurrentUserIndex).getRechargedContacts()) {
                 if(count2==0){
                     System.out.println("\nContacts of previous mobile recharge :\n");
                 }
-                System.out.println(count2 + 1 + " .  " + RechargedContacts.get(count2));
+                System.out.println(count2 + 1 + " .  " + Main.Users.get(Main.CurrentUserIndex).getRechargedContacts().get(count2));
                 count2++;
             }
-            if(ContactList.size()>=1) {
+            if(Main.Users.get(Main.CurrentUserIndex).ContactList.size()>=1){
                 System.out.println("\nYour saved contacts :\n");
                 int contactcount = 0;
-                for (Contact ele: ContactList
+                for (Contact ele: Main.Users.get(Main.CurrentUserIndex).ContactList
                 ) {
-                    System.out.println(contactcount+". "+ele.getContactNumber()+"Name : "+ele.getName());
+                    System.out.println((contactcount+1)+". "+ele.Name+" - "+ele.ContactNumber);
+                    contactcount++;
                 }
+
             }
         }
         System.out.print("\nPlans available\n");
@@ -156,9 +158,9 @@ class Account extends User {
         switch(plan){
             case 1:
 
-                if(balance>182 &&  mobilenum.matches("[987][0-9]{9}")) {
-                    balance=balance-182;
-                    addRechargedContacts(mobilenum);
+                if(Main.Users.get(Main.CurrentUserIndex).balance>182 &&  mobilenum.matches("[9876][0-9]{9}")) {
+                    Main.Users.get(Main.CurrentUserIndex).balance=Main.Users.get(Main.CurrentUserIndex).balance-182;
+                    Main.Users.get(Main.CurrentUserIndex).setRechargedContacts(mobilenum);
                     System.out.println("\nRecharge of '182.0' is successful for the number '" + mobilenum + "'\nBenefits:Unlimited Data,no Voice/SMS\n");
                     System.out.print("\nPress 'c' to continue.....   ");
                     String enter=input.next();
@@ -172,9 +174,9 @@ class Account extends User {
                 }
             case 2:
 
-                if(balance>182 &&  mobilenum.matches("[987][0-9]{9}")) {
-                    balance=balance-299;
-                    RechargedContacts.add(mobilenum);
+                if(Main.Users.get(Main.CurrentUserIndex).balance>182 &&  mobilenum.matches("[9876][0-9]{9}")) {
+                    Main.Users.get(Main.CurrentUserIndex).balance=Main.Users.get(Main.CurrentUserIndex).balance-299;
+                    Main.Users.get(Main.CurrentUserIndex).setRechargedContacts(mobilenum);
                     System.out.println("\nRecharge of '299.0' is successful for the number '" + mobilenum + "\nBenefits:Unlimited Data,no Voice/SMS\n");
                     System.out.print("\nPress 'c' to continue.....   ");
                     String enter=input.next();
@@ -188,9 +190,9 @@ class Account extends User {
                 }
             case 3:
 
-                if(balance>182 &&  mobilenum.matches("[987][0-9]{9}")) {
-                    balance=balance-399;
-                    RechargedContacts.add(mobilenum);
+                if(Main.Users.get(Main.CurrentUserIndex).balance>182 &&  mobilenum.matches("[9876][0-9]{9}")) {
+                    Main.Users.get(Main.CurrentUserIndex).balance=Main.Users.get(Main.CurrentUserIndex).balance-399;
+                    Main.Users.get(Main.CurrentUserIndex).setRechargedContacts(mobilenum);
                     System.out.println("\nRecharge of '399.0' is successful for the number '" + mobilenum + "'\nBenefits:Unlimited Data,no Voice/SMS\n");
                     System.out.print("\nPress 'c' to continue.....   ");
                     String enter=input.next();
@@ -285,6 +287,25 @@ class Account extends User {
         Main.HomePage();
     }
 
+    public void  history(){
+
+        if (Main.Users.get(Main.CurrentUserIndex).TransactionHistorys.size()>0){
+            int tcount =0;
+            for (TransactionHistory ele: Main.Users.get(Main.CurrentUserIndex).TransactionHistorys
+                 ) {
+                System.out.println("\n\nYour TransactionHistory\n\n"+(tcount+1)+". "+ele.Type+"/"+ele.to+"/"+ele.Amount+"/"+ele.date);
+            }
+            System.out.print("\nPress 'c' to continue.....   ");
+            String enter=input.next();
+            Main.HomePage();
+        }else {
+
+            System.out.print("\n\nNo TransactionHistory found\n\n\nPress 'c' to continue.....   ");
+            String enter=input.next();
+            Main.HomePage();
+        }
+
+    }
     public void SaveTransaction(){
 
     }
@@ -407,6 +428,7 @@ public class Main {
         System.out.println("\nApplication terminated successfully :) ");
         System.exit(0);
     }
+
     public static void HomePage() {
         System.out.println("\n\nWelcome " + Users.get(CurrentUserIndex).getNamee() + "\n\n1.Add Money\n2.Send Money\n3.Mobile Recharge" +
                 "\n4.DTH Recharge\n5.Electricity\n6.Save contact\n7.Check Balance\n8.History\n9.Exit\n\n ");
@@ -435,6 +457,9 @@ public class Main {
             case 7:
                 acc.checkBalance();
                 break;
+            case 8:
+                acc.history();
+                break;
             case 9:
                 mainfunction();
             default:
@@ -444,7 +469,41 @@ public class Main {
 
 }
 
-class Transaction extends  Account{
+class TransactionHistory extends  Account{
+    String Type , to ,date;
+    double Amount;
+
+    public String getType() {
+        return Type;
+    }
+
+    public void setType(String type) {
+        Type = type;
+    }
+
+    public String getTo() {
+        return to;
+    }
+
+    public void setTo(String to) {
+        this.to = to;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public double getAmount() {
+        return Amount;
+    }
+
+    public void setAmount(double amount) {
+        Amount = amount;
+    }
 }
 
 
@@ -466,6 +525,7 @@ class Contact extends Account{
 
 
 }
+
 
 
 
