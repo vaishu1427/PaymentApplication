@@ -427,5 +427,9 @@ class Contacts extends Account{
 
 }
 
+class Mini{
+    
+}
+
 
 
