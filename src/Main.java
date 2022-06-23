@@ -1,5 +1,9 @@
+import org.h2.jdbc.JdbcResultSet;
+
+import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.*;
 
@@ -322,37 +326,28 @@ class Account extends User {
 
 
 public class Main {
+
+
+
+
     static Scanner input = new Scanner(System.in);
     static Account acc = new Account();
     static List<User> Users = new ArrayList<>();
     static boolean UserAuth = false;
     static int CurrentUserIndex;
+    static  String sql;
+    static DataBase db = new DataBase();
 
-    public static void main(String[] args) {
-        String usernameinput = "Vaishu";
-        String addressinput = "Coimbatore";
-        String mobileinput = "9874563210";
-        int pininput = 12345;
-        int useridd = Users.size() + 1;
-        User NewUser = new User();
-        NewUser.setNamee(usernameinput);
-        NewUser.setAddress(addressinput);
-        NewUser.setMobile(mobileinput);
-        NewUser.setPin(pininput);
-        NewUser.setUserId(useridd);
-        Users.add(NewUser);
-        String usernameinput1 = "Udhaya";
-        String addressinput1 = "Tiruppur";
-        String mobileinput1 = "9874563211";
-        int pininput1 = 1234;
-        int useridd1 = Users.size() + 1;
-        User NewUser1 = new User();
-        NewUser1.setNamee(usernameinput1);
-        NewUser1.setAddress(addressinput1);
-        NewUser1.setMobile(mobileinput1);
-        NewUser1.setPin(pininput1);
-        NewUser1.setUserId(useridd1);
-        Users.add(NewUser1);
+
+    public static void main(String[] args) throws SQLException {
+        db.ConnectDB("jdbc:h2:sampleDB");
+        db.CreateStatement();
+
+        sql = "CREATE TABLE IF NOT EXISTS Users (ID int primary key, name varchar(50) , mobile varchar(12),pin int,balance int)";
+        db.statement.execute(sql);
+        System.out.println("Connected to H2 embedded database.");
+
+
         mainfunction();
     }
 
@@ -380,16 +375,22 @@ public class Main {
         System.out.print("Pin : ");
         int pininput = input.nextInt();
         int index = 0;
-        for (User ele : Users
-        ) {
-            if (ele.getUserId() == useridinput && ele.getPin()== pininput) {
-                UserAuth = true;
-                CurrentUserIndex = index;
-                System.out.println("\nLogin successful  :)\n");
-                HomePage();
-                break;
+        sql = "SELECT * FROM Users";
+        try {
+            ResultSet resultSet = db.statement.executeQuery(sql);
+            while (resultSet.next()) {
+                int id = resultSet.getInt("ID");
+                int pin = resultSet.getInt("pin");
+                if (useridinput==id && pininput==pin){
+                    UserAuth = true;
+                    System.out.println("\nLogin successful  :)\n");
+                    HomePage();
+                    break;
+                }
+
             }
-            index++;
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         System.out.println("\nInvalid Try again\n");
         System.out.print("\nPress 'c' to continue.....   ");
@@ -397,7 +398,7 @@ public class Main {
         mainfunction();
     }
 
-    public static void Signup() {
+    public static void Signup(){
         System.out.println("\n");
         input.nextLine();
         System.out.print("UserName : ");
@@ -408,16 +409,24 @@ public class Main {
         String mobileinput = input.next();
         System.out.print("Pin : ");
         int pininput = input.nextInt();
-        int useridd = Users.size() + 1;
-        User NewUser = new User();
-        NewUser.setNamee(usernameinput);
-        NewUser.setAddress(addressinput);
-        NewUser.setMobile(mobileinput);
-        NewUser.setPin(pininput);
-        NewUser.setUserId(useridd);
-        System.out.println("\nYour userid is :" + useridd);
-        Users.add(NewUser);
+        int useridd = 0;
+        sql = "SELECT * FROM Users";
+        try {
+            ResultSet result = db.statement.executeQuery(sql);
+            while (result.next()){
+                useridd++;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        sql="Insert into Users (ID, name,mobile,pin) values ("+(useridd+1)+", '"+usernameinput+"',"+mobileinput+","+pininput+")";
+        try {
+            db.statement.execute(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         System.out.println("\nAccount Created successful :)\n");
+        System.out.println("\nYour userid is :" + (useridd+1));
         System.out.print("\nPress 'c' to continue.....   ");
         String enter=input.next();
         mainfunction();
@@ -429,7 +438,7 @@ public class Main {
     }
 
     public static void HomePage() {
-        System.out.println("\n\nWelcome " + Users.get(CurrentUserIndex).getNamee() + "\n\n1.Add Money\n2.Send Money\n3.Mobile Recharge" +
+        System.out.println("\n\nWelcome "  + "\n\n1.Add Money\n2.Send Money\n3.Mobile Recharge" +
                 "\n4.DTH Recharge\n5.Electricity\n6.Save contact\n7.Check Balance\n8.History\n9.Logout\n\n ");
         System.out.print("Enter your input : ");
 
@@ -526,5 +535,22 @@ class Contact extends Account{
 }
 
 
+class DataBase {
+    public static  Connection connection;
+    public static Statement statement;
 
+    public void ConnectDB(String url)  {
+        try {
+            connection = DriverManager.getConnection(url);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        };
+    }
+
+    public void CreateStatement() throws SQLException {
+        statement = connection.createStatement();
+    }
+
+
+}
 
