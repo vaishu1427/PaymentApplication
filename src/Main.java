@@ -340,9 +340,7 @@ public class Main {
         NewUser.setMobile(mobileinput);
         NewUser.setPin(pininput);
         NewUser.setUserId(useridd);
-        NewUser.balance = 500;
         Users.add(NewUser);
-        System.out.println(useridd);
         String usernameinput1 = "Udhaya";
         String addressinput1 = "Tiruppur";
         String mobileinput1 = "9874563211";
@@ -354,9 +352,7 @@ public class Main {
         NewUser1.setMobile(mobileinput1);
         NewUser1.setPin(pininput1);
         NewUser1.setUserId(useridd1);
-        NewUser1.balance = 400;
         Users.add(NewUser1);
-        System.out.println(useridd1);
         mainfunction();
     }
 
