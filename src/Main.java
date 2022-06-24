@@ -1,8 +1,6 @@
 import java.sql.*;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.*;
 
 
@@ -12,12 +10,14 @@ public class Main {
     static int TempUserID;
     static  String sql;
     static DataBase db = new DataBase();
-    
-    public static void main(String[] args) throws SQLException {
-        db.ConnectDB("jdbc:h2:sampleDB");
-        System.out.println("Connected to H2 embedded database.");
-        db.CreateStatement();
 
+    public static void main(String[] args) throws SQLException {
+
+        //Connecting To DataBase
+        db.ConnectDB("jdbc:h2:PaymentDB");
+        System.out.println("Connected to H2 embedded database.");
+
+        //Creating DataBase Tables
         sql = "CREATE TABLE IF NOT EXISTS Users (UserID int primary key, name varchar(50) , mobile varchar(12),pin int,balance int)";
         db.statement.execute(sql);
         sql = "CREATE TABLE IF NOT EXISTS ContactList (ContactID int primary key,UserID int,name varchar(50),mobile varchar(12))";
@@ -47,24 +47,28 @@ public class Main {
 
     public static void Login() {
         System.out.println("\n\n");
-        System.out.print("UserId : ");
-        int useridinput = input.nextInt();
+        System.out.print("Mobile : ");
+        String mobileinput = input.next();
         System.out.print("Pin : ");
         int pininput = input.nextInt();
         int index = 0;
+
+        //Fetching all users from Db
         sql = "SELECT * FROM Users";
         try {
             ResultSet resultSet = db.statement.executeQuery(sql);
             while (resultSet.next()) {
+
+                //Validating the Inputs with records
                 int id = resultSet.getInt("UserID");
                 int pin = resultSet.getInt("pin");
-                if (useridinput==id && pininput==pin){
+                String mobile = resultSet.getString("mobile");
+                if (mobileinput.equals(mobile) && pininput==pin){
                     TempUserID = id;
                     System.out.println("\nLogin successful  :)\n");
                     HomePage();
                     break;
                 }
-
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -85,25 +89,49 @@ public class Main {
         int pininput = input.nextInt();
         int balance = 0;
         int useridd = 0;
+        boolean Userexist =false;
+
+        //Checking if the user already exist
         sql = "SELECT * FROM Users";
         try {
             ResultSet result = db.statement.executeQuery(sql);
             while (result.next()){
-                useridd++;
+                String mobile = result.getString("mobile");
+                if(mobileinput.equals(mobile)){
+                    Userexist = true;
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        sql="Insert into Users (UserID, name,mobile,pin,balance) values ("+(useridd+1)+", '"+usernameinput+"',"+mobileinput+","+pininput+","+balance+")";
-        try {
-            db.statement.execute(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
+
+        if(Userexist){
+            System.out.println("\n\nUser already exist please try to login\n\n");
+        }else {
+            //Counting the no.of users in record
+            sql = "SELECT * FROM Users";
+            try {
+                ResultSet result = db.statement.executeQuery(sql);
+                while (result.next()){
+                    useridd++;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            //Creating a new record for user
+            sql="Insert into Users (UserID, name,mobile,pin,balance) values ("+(useridd+1)+", '"+usernameinput+"',"+mobileinput+","+pininput+","+balance+")";
+            try {
+                db.statement.execute(sql);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            System.out.println("\nAccount Created successful :)\n");
         }
-        System.out.println("\nAccount Created successful :)\n");
-        System.out.println("\nYour userid is :" + (useridd+1));
         enterToContinue();
         mainfunction();
+
+
     }
 
     public static void Exit(){
@@ -181,14 +209,13 @@ public class Main {
     public static void sendMoney() {
 
         SavedContacts();
-
         System.out.print("\nEnter the mobile number to send money : ");
         String sendmobilenum=input.next();
         System.out.print("\nEnter the amount to send :");
         int sendmoney=input.nextInt();
 
+        //Checking the Available balance
         int currentBalance = getCurrentBalance();
-
         if(currentBalance>sendmoney &&  sendmobilenum.matches("[9876][0-9]{9}")) {
             updateBalance(sendmoney);
             SaveTransactionHistory("Money Transfer",sendmobilenum,sendmoney);
@@ -204,7 +231,6 @@ public class Main {
     public static void mobileRecharge() {
 
         SavedContacts();
-
         System.out.print("\nPlans available\n");
         System.out.print("\n1. 182 plan(voice-N/A,internet-available)\n2. 299 plan(voice,internet-available)\n3. 399 plan(voice,internet-available) \n");
         System.out.print("\nEnter the mobile number to recharge : ");
@@ -469,13 +495,10 @@ class DataBase {
     public void ConnectDB(String url)  {
         try {
             connection = DriverManager.getConnection(url);
+            statement = connection.createStatement();
         } catch (SQLException e) {
             e.printStackTrace();
         };
-    }
-
-    public void CreateStatement() throws SQLException {
-        statement = connection.createStatement();
     }
 
 
