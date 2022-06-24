@@ -8,7 +8,7 @@ public class Main {
 
     static Scanner input = new Scanner(System.in);
     static int TempUserID;
-    static  String sql;
+    static String sql;
     static DataBase db = new DataBase();
 
     public static void main(String[] args) throws SQLException {
@@ -24,6 +24,11 @@ public class Main {
         db.statement.execute(sql);
         sql = "CREATE TABLE IF NOT EXISTS TransactionHistory (TransactionID int primary key,UserID int,Type varchar(50),To varchar(50),Amount int,Date varchar(50))";
         db.statement.execute(sql);
+        sql = "CREATE TABLE IF NOT EXISTS MoneyTransferredList (MoneyTransferredID int primary key,UserID int,mobile varchar(12))";
+        db.statement.execute(sql);
+        sql = "CREATE TABLE IF NOT EXISTS MobileRechargedList (MobileRechargedID int primary key,UserID int,mobile varchar(12))";
+        db.statement.execute(sql);
+
 
         mainfunction();
     }
@@ -63,7 +68,7 @@ public class Main {
                 int id = resultSet.getInt("UserID");
                 int pin = resultSet.getInt("pin");
                 String mobile = resultSet.getString("mobile");
-                if (mobileinput.equals(mobile) && pininput==pin){
+                if (mobileinput.equals(mobile) && pininput == pin) {
                     TempUserID = id;
                     System.out.println("\nLogin successful  :)\n");
                     HomePage();
@@ -78,7 +83,7 @@ public class Main {
         mainfunction();
     }
 
-    public static void Signup(){
+    public static void Signup() {
         System.out.println("\n");
         input.nextLine();
         System.out.print("UserName : ");
@@ -89,15 +94,15 @@ public class Main {
         int pininput = input.nextInt();
         int balance = 0;
         int useridd = 0;
-        boolean Userexist =false;
+        boolean Userexist = false;
 
         //Checking if the user already exist
         sql = "SELECT * FROM Users";
         try {
             ResultSet result = db.statement.executeQuery(sql);
-            while (result.next()){
+            while (result.next()) {
                 String mobile = result.getString("mobile");
-                if(mobileinput.equals(mobile)){
+                if (mobileinput.equals(mobile)) {
                     Userexist = true;
                 }
             }
@@ -105,14 +110,14 @@ public class Main {
             e.printStackTrace();
         }
 
-        if(Userexist){
+        if (Userexist) {
             System.out.println("\n\nUser already exist please try to login\n\n");
-        }else {
+        } else {
             //Counting the no.of users in record
             sql = "SELECT * FROM Users";
             try {
                 ResultSet result = db.statement.executeQuery(sql);
-                while (result.next()){
+                while (result.next()) {
                     useridd++;
                 }
             } catch (SQLException e) {
@@ -120,7 +125,7 @@ public class Main {
             }
 
             //Creating a new record for user
-            sql="Insert into Users (UserID, name,mobile,pin,balance) values ("+(useridd+1)+", '"+usernameinput+"',"+mobileinput+","+pininput+","+balance+")";
+            sql = "Insert into Users (UserID, name,mobile,pin,balance) values (" + (useridd + 1) + ", '" + usernameinput + "'," + mobileinput + "," + pininput + "," + balance + ")";
             try {
                 db.statement.execute(sql);
             } catch (SQLException e) {
@@ -134,13 +139,13 @@ public class Main {
 
     }
 
-    public static void Exit(){
+    public static void Exit() {
         System.out.println("\nApplication terminated successfully :) ");
         System.exit(0);
     }
 
     public static void HomePage() {
-        System.out.println("\n\nWelcome "  + "\n\n1.Add Money\n2.Send Money\n3.Mobile Recharge" +
+        System.out.println("\n\nWelcome " + "\n\n1.Add Money\n2.Send Money\n3.Mobile Recharge" +
                 "\n4.DTH Recharge\n5.Electricity\n6.Save contact\n7.Check Balance\n8.History\n9.Logout\n\n ");
         System.out.print("Enter your input : ");
 
@@ -179,11 +184,11 @@ public class Main {
 
     public static void addMoney() {
         System.out.print("\nEnter the amount to deposit:");
-        double amount1=input.nextDouble();
+        double amount1 = input.nextDouble();
 
         //Getting the Current Balance
-        sql = "SELECT * FROM Users WHERE UserID="+TempUserID+"";
-        int tempbalance=0;
+        sql = "SELECT * FROM Users WHERE UserID=" + TempUserID + "";
+        int tempbalance = 0;
         try {
             ResultSet resultSet = db.statement.executeQuery(sql);
             while (resultSet.next()) {
@@ -194,10 +199,10 @@ public class Main {
         }
 
         //Updating Balance
-        sql = "UPDATE Users SET balance = "+(tempbalance+amount1)+" WHERE UserID ="+TempUserID+"";
+        sql = "UPDATE Users SET balance = " + (tempbalance + amount1) + " WHERE UserID =" + TempUserID + "";
         try {
             db.statement.execute(sql);
-            System.out.println("\nThe amount '"+amount1+"' added successfully to your account :) \n");
+            System.out.println("\nThe amount '" + amount1 + "' added successfully to your account :) \n");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -207,97 +212,165 @@ public class Main {
     }
 
     public static void sendMoney() {
-
+        MoneyTransferredContacts();
         SavedContacts();
+
         System.out.print("\nEnter the mobile number to send money : ");
-        String sendmobilenum=input.next();
+        String sendmobilenum = input.next();
         System.out.print("\nEnter the amount to send :");
-        int sendmoney=input.nextInt();
+        int sendmoney = input.nextInt();
+
 
         //Checking the Available balance
         int currentBalance = getCurrentBalance();
-        if(currentBalance>sendmoney &&  sendmobilenum.matches("[9876][0-9]{9}")) {
+        if (currentBalance > sendmoney && sendmobilenum.matches("[9876][0-9]{9}")) {
             updateBalance(sendmoney);
-            SaveTransactionHistory("Money Transfer",sendmobilenum,sendmoney);
-            System.out.println("\nSuccessfully transfered the amount '"+sendmoney+"' to the mobile number '"+sendmobilenum+"'\n");
-        }
-        else{
+            SaveTransactionHistory("Money Transfer", sendmobilenum, sendmoney);
+            int Tempid = 0;
+            sql = "SELECT * FROM MoneyTransferredList";
+            try {
+                ResultSet result = db.statement.executeQuery(sql);
+                while (result.next()) {
+                    Tempid++;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            //Updating new MoneyTransferredContact
+            sql = "Insert into MoneyTransferredList (MoneyTransferredID,UserID,mobile) values (" + (Tempid + 1) + "," + TempUserID + "," + sendmobilenum + ")";
+            try {
+                db.statement.execute(sql);
+                System.out.println("\nSuccessfully transfered the amount '" + sendmoney + "' to the mobile number '" + sendmobilenum + "'\n");
+                enterToContinue();
+                Main.HomePage();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+        } else {
             System.out.println("Invalid try again\n\nSolution :  Check your Account balance or Enter a valid mobile number");
+            enterToContinue();
+            Main.HomePage();
         }
-        enterToContinue();
-        Main.HomePage();
+
     }
 
     public static void mobileRecharge() {
-
+        MobileRechargedContacts();
         SavedContacts();
+
         System.out.print("\nPlans available\n");
         System.out.print("\n1. 182 plan(voice-N/A,internet-available)\n2. 299 plan(voice,internet-available)\n3. 399 plan(voice,internet-available) \n");
         System.out.print("\nEnter the mobile number to recharge : ");
-        String mobilenum=input.next();
+        String mobilenum = input.next();
         System.out.print("\nEnter the plan : ");
-        int plan=input.nextInt();
+        int plan = input.nextInt();
         int currentBalance = getCurrentBalance();
-        switch(plan){
+        switch (plan) {
             case 1:
-
-                if(currentBalance>182 &&  mobilenum.matches("[9876][0-9]{9}")) {
+                if (currentBalance > 182 && mobilenum.matches("[9876][0-9]{9}")) {
                     updateBalance(182);
-                    SaveTransactionHistory("Mobile Recharge",mobilenum,182);
+                    SaveTransactionHistory("Mobile Recharge", mobilenum, 182);
+                    int Tempid = 0;
+                    sql = "SELECT * FROM MobileRechargedList";
+                    try {
+                        ResultSet result = db.statement.executeQuery(sql);
+                        while (result.next()) {
+                            Tempid++;
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                        //Updating new MoneyRechargedList
+                    sql = "Insert into MobileRechargedList (MobileRechargedID,UserID,mobile) values (" + (Tempid + 1) + "," + TempUserID + "," + mobilenum + ")";
+                    try {
+                        db.statement.execute(sql);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     System.out.println("\nRecharge of '182.0' is successful for the number '" + mobilenum + "'\nBenefits:Unlimited Data,no Voice/SMS\n");
                     enterToContinue();
                     break;
-                }
-                else{
+                } else {
                     System.out.println("\nInvalid try again\n\nSolution :  Check your Account balance or Enter a valid mobile number\n");
                     enterToContinue();
                     Main.HomePage();
                 }
-            case 2:
+                case 2:
+                    if (currentBalance > 299 && mobilenum.matches("[9876][0-9]{9}")) {
+                        updateBalance(299);
+                        SaveTransactionHistory("Mobile Recharge", mobilenum, 299);
+                        int Tempid = 0;
+                        sql = "SELECT * FROM MobileRechargedList";
+                        try {
+                            ResultSet result = db.statement.executeQuery(sql);
+                            while (result.next()) {
+                                Tempid++;
+                            }
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                        //Updating new MoneyRechargedList
+                        sql = "Insert into MobileRechargedList (MobileRechargedID,UserID,mobile) values (" + (Tempid + 1) + "," + TempUserID + "," + mobilenum + ")";
+                        try {
+                            db.statement.execute(sql);
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                        System.out.println("\nRecharge of '299.0' is successful for the number '" + mobilenum + "\nBenefits:Unlimited Data,no Voice/SMS\n");
+                        enterToContinue();
+                        break;
+                    } else {
+                        System.out.println("\nInvalid try again\n\nSolution :  Check your Account balance or Enter a valid mobile number\n");
+                        enterToContinue();
+                        Main.HomePage();
+                    }
+                case 3:
+                    if (currentBalance > 399 && mobilenum.matches("[9876][0-9]{9}")) {
+                        updateBalance(399);
+                        SaveTransactionHistory("Mobile Recharge", mobilenum, 399);
+                        int Tempid = 0;
+                        sql = "SELECT * FROM MobileRechargedList";
+                        try {
+                            ResultSet result = db.statement.executeQuery(sql);
+                            while (result.next()) {
+                                Tempid++;
+                            }
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
 
-                if(currentBalance>299 &&  mobilenum.matches("[9876][0-9]{9}")) {
-                    updateBalance(299);
-                    SaveTransactionHistory("Mobile Recharge",mobilenum,299);
-                    System.out.println("\nRecharge of '299.0' is successful for the number '" + mobilenum + "\nBenefits:Unlimited Data,no Voice/SMS\n");
-                    enterToContinue();
-                    break;
-                }
-                else{
-                    System.out.println("\nInvalid try again\n\nSolution :  Check your Account balance or Enter a valid mobile number\n");
-                    enterToContinue();
-                    Main.HomePage();
-                }
-            case 3:
-
-                if(currentBalance>399 &&  mobilenum.matches("[9876][0-9]{9}")) {
-                    updateBalance(399);
-                    SaveTransactionHistory("Mobile Recharge",mobilenum,399);
-                    System.out.println("\nRecharge of '399.0' is successful for the number '" + mobilenum + "'\nBenefits:Unlimited Data,no Voice/SMS\n");
-                    enterToContinue();
-                    break;
-                }
-                else{
-                    System.out.println("\nInvalid try again\n\nSolution :  Check your Account balance or Enter a valid mobile number\n");
-                    enterToContinue();
-                    Main.HomePage();
-                }
+                        //Updating new MoneyRechargedList
+                        sql = "Insert into MobileRechargedList (MobileRechargedID,UserID,mobile) values (" + (Tempid + 1) + "," + TempUserID + "," + mobilenum + ")";
+                        try {
+                            db.statement.execute(sql);
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                        System.out.println("\nRecharge of '399.0' is successful for the number '" + mobilenum + "'\nBenefits:Unlimited Data,no Voice/SMS\n");
+                        enterToContinue();
+                        break;
+                    } else {
+                        System.out.println("\nInvalid try again\n\nSolution :  Check your Account balance or Enter a valid mobile number\n");
+                        enterToContinue();
+                        Main.HomePage();
+                    }
         }
-        Main.HomePage();
     }
 
     public static void DTHRecharge() {
         input.nextLine();
         System.out.print("\nEnter the Customer id : ");
-        String customerId=input.next();
+        String customerId = input.next();
         System.out.print("\nEnter the amount to recharge : ");
-        int DTHAmount=input.nextInt();
+        int DTHAmount = input.nextInt();
         int currentBalance = getCurrentBalance();
-        if(currentBalance>DTHAmount) {
+        if (currentBalance > DTHAmount) {
             updateBalance(DTHAmount);
-            SaveTransactionHistory("DTH Recharge",customerId,DTHAmount);
+            SaveTransactionHistory("DTH Recharge", customerId, DTHAmount);
             System.out.println("\nSuccessfully recharged for amount '" + DTHAmount + "' :)\n");
-        }
-        else{
+        } else {
             System.out.println("\nInvalid try again\n\nSolution :  Check your Account balance\n");
         }
         enterToContinue();
@@ -307,18 +380,17 @@ public class Main {
     public static void electricity() {
         input.nextLine();
         System.out.print("\nEnter the State : ");
-        String State=input.nextLine();
+        String State = input.nextLine();
         System.out.print("\nEnter the customerId : ");
-        String customerId=input.next();
+        String customerId = input.next();
         System.out.print("\nEnter the amount to pay electricity bill:");
-        int ElectricityAmount=input.nextInt();
+        int ElectricityAmount = input.nextInt();
         int currentBalance = getCurrentBalance();
-        if(currentBalance>ElectricityAmount) {
+        if (currentBalance > ElectricityAmount) {
             updateBalance(ElectricityAmount);
-            SaveTransactionHistory("Electricity",customerId,ElectricityAmount);
+            SaveTransactionHistory("Electricity", customerId, ElectricityAmount);
             System.out.println("\nSuccessfully paid the amount '" + ElectricityAmount + "' :)\n");
-        }
-        else{
+        } else {
             System.out.println("\nInvalid try again\n\nSolution :  Check your Account balance\n");
         }
         enterToContinue();
@@ -332,12 +404,12 @@ public class Main {
         System.out.println("\nBalance is : " + currentBalance);
 
         System.out.print("\nPress 'c' to continue.....   ");
-        String enter=input.next();
+        String enter = input.next();
         Main.HomePage();
 
     }
 
-    public static void saveContact(){
+    public static void saveContact() {
 
         SavedContacts();
 
@@ -346,11 +418,11 @@ public class Main {
         String ContactNumber = input.nextLine();
         System.out.print("\nEnter the user name : ");
         String ContactName = input.nextLine();
-        int Tempid=0;
+        int Tempid = 0;
         sql = "SELECT * FROM ContactList";
         try {
             ResultSet result = db.statement.executeQuery(sql);
-            while (result.next()){
+            while (result.next()) {
                 Tempid++;
             }
         } catch (SQLException e) {
@@ -358,28 +430,29 @@ public class Main {
         }
 
         //Updating new Contact
-        sql="Insert into ContactList (ContactID,UserID, name,mobile) values ("+(Tempid+1)+","+TempUserID+",'"+ContactName+"',"+ContactNumber+")";
+        sql = "Insert into ContactList (ContactID,UserID, name,mobile) values (" + (Tempid + 1) + "," + TempUserID + ",'" + ContactName + "'," + ContactNumber + ")";
         try {
             db.statement.execute(sql);
+            System.out.println("\nContact number added successfully :) \n");
+            System.out.print("\nPress 'c' to continue.....   ");
+            String enter = input.next();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        System.out.println("\nContact number added successfully :) \n");
-        System.out.print("\nPress 'c' to continue.....   ");
-        String enter=input.next();
+
         Main.HomePage();
     }
 
-    public static void  history(){
-        int count=0;
-        sql = "SELECT * FROM TransactionHistory WHERE UserID="+TempUserID+"";
+    public static void history() {
+        int count = 0;
+        sql = "SELECT * FROM TransactionHistory WHERE UserID=" + TempUserID + "";
         try {
             ResultSet resultSet = db.statement.executeQuery(sql);
             while (resultSet.next()) {
                 count++;
 
             }
-            if (count>0){
+            if (count > 0) {
                 System.out.println("\n\nYour TransactionHistory");
                 ResultSet resultSet1 = db.statement.executeQuery(sql);
                 while (resultSet1.next()) {
@@ -388,11 +461,11 @@ public class Main {
                     String To = resultSet1.getString("To");
                     int Amount = resultSet1.getInt("Amount");
                     String Date = resultSet1.getString("Date");
-                    System.out.print("\nID:"+TransactionID+" | Type: "+Type+" | To: "+To+" | Amount: "+Amount+" | Date: "+Date);
+                    System.out.print("\nID:" + TransactionID + " | Type: " + Type + " | To: " + To + " | Amount: " + Amount + " | Date: " + Date);
 
                 }
                 enterToContinue();
-            }else {
+            } else {
 
                 System.out.print("\n\nNo TransactionHistory found\n\n\n ");
                 enterToContinue();
@@ -405,11 +478,11 @@ public class Main {
 
     }
 
-    public static int getCurrentBalance(){
+    public static int getCurrentBalance() {
 
         //Getting the Current Balance
-        sql = "SELECT * FROM Users WHERE UserID="+TempUserID+"";
-        int tempbalance=0;
+        sql = "SELECT * FROM Users WHERE UserID=" + TempUserID + "";
+        int tempbalance = 0;
         try {
             ResultSet resultSet = db.statement.executeQuery(sql);
             while (resultSet.next()) {
@@ -421,10 +494,10 @@ public class Main {
         return tempbalance;
     }
 
-    public static void updateBalance(int Amount){
+    public static void updateBalance(int Amount) {
         int currentBalance = getCurrentBalance();
         //Updating Balance
-        sql = "UPDATE Users SET balance = "+(currentBalance-Amount)+" WHERE UserID ="+TempUserID+"";
+        sql = "UPDATE Users SET balance = " + (currentBalance - Amount) + " WHERE UserID =" + TempUserID + "";
         try {
             db.statement.execute(sql);
         } catch (SQLException e) {
@@ -432,24 +505,24 @@ public class Main {
         }
     }
 
-    public static void SavedContacts(){
+    public static void SavedContacts() {
         //Fetching Saved Contacts
-        int count=0;
-        sql = "SELECT * FROM ContactList WHERE UserID="+TempUserID+"";
+        int count = 0;
+        sql = "SELECT * FROM ContactList WHERE UserID=" + TempUserID + "";
         try {
             ResultSet resultSet = db.statement.executeQuery(sql);
             while (resultSet.next()) {
                 count++;
             }
-            if (count>0){
+            if (count > 0) {
                 System.out.println("\nYour Saved Contacts :");
                 ResultSet resultSet1 = db.statement.executeQuery(sql);
-                int count1=0;
+                int count1 = 0;
                 while (resultSet1.next()) {
                     count1++;
                     String ContactName = resultSet1.getString("name");
                     String ContactNumber = resultSet1.getString("mobile");
-                    System.out.println(count1+". "+ContactName+" - "+ContactNumber);
+                    System.out.println(count1 + ". " + ContactName + " - " + ContactNumber);
 
                 }
             }
@@ -458,12 +531,61 @@ public class Main {
         }
     }
 
-    public static void SaveTransactionHistory(String Type,String To,int Amount){
+    public static void MoneyTransferredContacts() {
+        int count = 0;
+        sql = "SELECT * FROM MoneyTransferredList WHERE UserID=" + TempUserID + "";
+        try {
+            ResultSet resultSet = db.statement.executeQuery(sql);
+            while (resultSet.next()) {
+                count++;
+            }
+            if (count > 0) {
+                System.out.println("\nYour Previous Money Transferred Contacts :");
+                ResultSet resultSet1 = db.statement.executeQuery(sql);
+                int count1 = 0;
+                while (resultSet1.next()) {
+                    count1++;
+                    String ContactNumber = resultSet1.getString("mobile");
+                    System.out.println(count1 + ". " + ContactNumber);
+
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void MobileRechargedContacts() {
+        int count = 0;
+        sql = "SELECT * FROM MobileRechargedList WHERE UserID=" + TempUserID + "";
+        try {
+            ResultSet resultSet = db.statement.executeQuery(sql);
+            while (resultSet.next()) {
+                count++;
+            }
+            if (count > 0) {
+                System.out.println("\nYour Previous Mobile Recharged Contacts :");
+                ResultSet resultSet1 = db.statement.executeQuery(sql);
+                int count1 = 0;
+                while (resultSet1.next()) {
+                    count1++;
+                    String ContactNumber = resultSet1.getString("mobile");
+                    System.out.println(count1 + ". " + ContactNumber);
+
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static void SaveTransactionHistory(String Type, String To, int Amount) {
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         Date date = new Date();
         String Date = formatter.format(date);
 
-        int Tempid =0;
+        int Tempid = 0;
         sql = "SELECT * FROM TransactionHistory";
         try {
             ResultSet resultSet = db.statement.executeQuery(sql);
@@ -474,7 +596,7 @@ public class Main {
             e.printStackTrace();
         }
 
-        sql="Insert into TransactionHistory (TransactionID, UserID,Type,To,Amount,Date) values ("+(Tempid+1)+","+TempUserID+",'"+Type+"','"+To+"',"+Amount+",'"+Date+"')";
+        sql = "Insert into TransactionHistory (TransactionID, UserID,Type,To,Amount,Date) values (" + (Tempid + 1) + "," + TempUserID + ",'" + Type + "','" + To + "'," + Amount + ",'" + Date + "')";
         try {
             db.statement.execute(sql);
         } catch (SQLException e) {
@@ -482,12 +604,11 @@ public class Main {
         }
     }
 
-    public static void enterToContinue(){
+    public static void enterToContinue() {
         System.out.print("\n\nPress 'c' to continue.....   \n");
-        String enter=input.next();
+        String enter = input.next();
     }
 }
-
 class DataBase {
     public static  Connection connection;
     public static Statement statement;
@@ -500,7 +621,5 @@ class DataBase {
             e.printStackTrace();
         };
     }
-
-
 }
 
