@@ -609,6 +609,7 @@ public class Main {
         String enter = input.next();
     }
 }
+
 class DataBase {
     public static  Connection connection;
     public static Statement statement;
